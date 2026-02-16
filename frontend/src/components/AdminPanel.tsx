@@ -94,7 +94,7 @@ export default function AdminPanel({ onClose, showToast }: AdminPanelProps) {
         };
         if (form.password) updateData.password = form.password;
         await api.updateAdminUser(editingUserId, updateData);
-        showToast("User updated");
+        showToast("User updated", "success");
       } else {
         if (!form.username || !form.password || !form.displayName) {
           showToast("All fields are required", "error");
@@ -102,7 +102,7 @@ export default function AdminPanel({ onClose, showToast }: AdminPanelProps) {
           return;
         }
         await api.createAdminUser(form);
-        showToast("User created");
+        showToast("User created", "success");
       }
       setFormOpen(false);
       loadData();
@@ -117,7 +117,7 @@ export default function AdminPanel({ onClose, showToast }: AdminPanelProps) {
   const handleDelete = async (id: string) => {
     try {
       await api.deleteAdminUser(id);
-      showToast("User deleted");
+      showToast("User deleted", "success");
       setDeleteConfirm(null);
       loadData();
     } catch (err: unknown) {
