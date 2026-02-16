@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Clock, LogIn, AlertCircle } from "lucide-react";
 
 // Import all Jämtland background images
@@ -17,8 +17,8 @@ import img12 from "../images/12.jpg";
 import img13 from "../images/13.jpg";
 
 const bgImages = [img1, img2, img3, img4, img5, img6, img7, img8, img9, img10, img11, img12, img13];
-const CYCLE_INTERVAL = 10000; // 10 seconds per image
-const FADE_DURATION = 2000;   // 2 second crossfade
+const CYCLE_INTERVAL = 30000; // 30 seconds per image
+const FADE_DURATION = 2500;   // 2.5 second crossfade
 
 interface LoginPageProps {
   onLogin: (username: string, password: string) => Promise<void>;
@@ -29,10 +29,12 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [nextIndex, setNextIndex] = useState(1);
-  const [fading, setFading] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Two-layer A/B crossfade: each layer alternates between visible and hidden.
+  // The hidden layer gets its image swapped while invisible, then fades in.
+  const [layerA, setLayerA] = useState(0);
+  const [layerB, setLayerB] = useState(1);
+  const [showB, setShowB] = useState(false); // when true, B is on top
 
   // Preload all images on mount
   useEffect(() => {
@@ -42,23 +44,26 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     });
   }, []);
 
-  // Cycle through images
+  // Cycle through images with clean A/B crossfade
   useEffect(() => {
-    const cycle = () => {
-      setFading(true);
-      // After fade completes, swap layers
-      timeoutRef.current = setTimeout(() => {
-        setCurrentIndex((prev) => (prev + 1) % bgImages.length);
-        setNextIndex((prev) => (prev + 1) % bgImages.length);
-        setFading(false);
-      }, FADE_DURATION);
-    };
+    let counter = 0;
+    const interval = setInterval(() => {
+      counter++;
+      const nextImg = (counter + 1) % bgImages.length;
 
-    const interval = setInterval(cycle, CYCLE_INTERVAL);
-    return () => {
-      clearInterval(interval);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
+      if (counter % 2 === 1) {
+        // B is hidden → load next image into B, then reveal B
+        setLayerB(nextImg);
+        // Small delay so the browser paints the new bg before fading
+        requestAnimationFrame(() => setShowB(true));
+      } else {
+        // A is hidden → load next image into A, then reveal A
+        setLayerA(nextImg);
+        requestAnimationFrame(() => setShowB(false));
+      }
+    }, CYCLE_INTERVAL);
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -80,24 +85,27 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     <div className="min-h-full flex items-center justify-center px-4 relative">
       {/* Background slideshow */}
       <div className="fixed inset-0 -z-10 overflow-hidden bg-black">
-        {/* Current image layer */}
+        {/* Layer A */}
         <div
-          className="absolute inset-0 bg-cover bg-center"
+          className="absolute inset-0 bg-cover bg-center scale-105"
           style={{
-            backgroundImage: `url(${bgImages[currentIndex]})`,
+            backgroundImage: `url(${bgImages[layerA]})`,
+            opacity: showB ? 0 : 1,
+            filter: "blur(3px)",
             transition: `opacity ${FADE_DURATION}ms ease-in-out`,
           }}
         />
-        {/* Next image layer (fades in on top) */}
+        {/* Layer B */}
         <div
-          className="absolute inset-0 bg-cover bg-center"
+          className="absolute inset-0 bg-cover bg-center scale-105"
           style={{
-            backgroundImage: `url(${bgImages[nextIndex]})`,
-            opacity: fading ? 1 : 0,
+            backgroundImage: `url(${bgImages[layerB]})`,
+            opacity: showB ? 1 : 0,
+            filter: "blur(3px)",
             transition: `opacity ${FADE_DURATION}ms ease-in-out`,
           }}
         />
-        {/* Subtle dark overlay so the form remains readable */}
+        {/* Dark overlay for readability */}
         <div className="absolute inset-0 bg-black/40" />
       </div>
 
