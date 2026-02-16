@@ -1,4 +1,4 @@
-import { Project, TimeEntry, LoginResponse, User, AdminUser } from "./types";
+import { Project, TimeEntry, LoginResponse, User, AdminUser, ProviderInfo, Integration, TestResult, SyncResult, SyncLog } from "./types";
 
 const BASE = "/api";
 
@@ -180,3 +180,50 @@ export const updateAdminUser = (
 
 export const deleteAdminUser = (id: string) =>
   request<void>(`/admin/users/${id}`, { method: "DELETE" });
+
+// ── Integrations ─────────────────────────────────────────
+
+export const getProviders = () =>
+  request<ProviderInfo[]>("/admin/integrations/providers");
+
+export const getIntegrations = () =>
+  request<Integration[]>("/admin/integrations");
+
+export const getIntegration = (id: string) =>
+  request<Integration>(`/admin/integrations/${id}`);
+
+export const createIntegration = (data: { provider: string; name: string; config: Record<string, unknown> }) =>
+  request<Integration>("/admin/integrations", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+export const updateIntegration = (id: string, data: { name?: string; config?: Record<string, unknown>; enabled?: boolean }) =>
+  request<Integration>(`/admin/integrations/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+
+export const deleteIntegration = (id: string) =>
+  request<void>(`/admin/integrations/${id}`, { method: "DELETE" });
+
+export const testIntegration = (id: string) =>
+  request<TestResult>(`/admin/integrations/${id}/test`, { method: "POST" });
+
+export const assignUserToIntegration = (integrationId: string, userId: string, externalId?: string) =>
+  request<{ id: string; externalId: string | null; user: { id: string; displayName: string; username: string } }>(
+    `/admin/integrations/${integrationId}/users`,
+    { method: "POST", body: JSON.stringify({ userId, externalId }) }
+  );
+
+export const removeUserFromIntegration = (integrationId: string, userId: string) =>
+  request<void>(`/admin/integrations/${integrationId}/users/${userId}`, { method: "DELETE" });
+
+export const syncIntegration = (integrationId: string, userId: string, from: string, to: string) =>
+  request<SyncResult>(`/admin/integrations/${integrationId}/sync`, {
+    method: "POST",
+    body: JSON.stringify({ userId, from, to }),
+  });
+
+export const getIntegrationLogs = (integrationId: string) =>
+  request<SyncLog[]>(`/admin/integrations/${integrationId}/logs`);

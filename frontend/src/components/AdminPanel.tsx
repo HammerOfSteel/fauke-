@@ -10,7 +10,10 @@ import {
   User as UserIcon,
   Loader2,
   Save,
+  Users,
+  Plug,
 } from "lucide-react";
+import IntegrationsPanel from "./IntegrationsPanel";
 
 interface AdminPanelProps {
   onClose: () => void;
@@ -38,6 +41,7 @@ export default function AdminPanel({ onClose, showToast }: AdminPanelProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState<"users" | "integrations">("users");
 
   // Form state
   const [formOpen, setFormOpen] = useState(false);
@@ -154,8 +158,36 @@ export default function AdminPanel({ onClose, showToast }: AdminPanelProps) {
           </button>
         </div>
 
+        {/* Tabs */}
+        <div className="flex border-b border-gray-200 dark:border-gray-800 px-6">
+          <button
+            onClick={() => setActiveTab("users")}
+            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === "users"
+                ? "border-brand-500 text-brand-600 dark:text-brand-400"
+                : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            }`}
+          >
+            <Users size={16} />
+            Users
+          </button>
+          <button
+            onClick={() => setActiveTab("integrations")}
+            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === "integrations"
+                ? "border-brand-500 text-brand-600 dark:text-brand-400"
+                : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            }`}
+          >
+            <Plug size={16} />
+            Integrations
+          </button>
+        </div>
+
         <div className="p-6">
-          {loading ? (
+          {activeTab === "integrations" ? (
+            <IntegrationsPanel showToast={showToast} />
+          ) : loading ? (
             <div className="flex items-center justify-center h-32">
               <Loader2 size={24} className="animate-spin text-brand-500" />
             </div>

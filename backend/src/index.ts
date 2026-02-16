@@ -6,6 +6,7 @@ import { projectRouter } from "./routes/projects.js";
 import { entryRouter } from "./routes/entries.js";
 import { exportRouter } from "./routes/export.js";
 import { adminRouter } from "./routes/admin.js";
+import { integrationRouter } from "./routes/integrations.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -28,6 +29,7 @@ app.use("/api/export", authMiddleware, exportRouter);
 
 // Admin routes (auth + admin role required)
 app.use("/api/admin", authMiddleware, adminMiddleware, adminRouter);
+app.use("/api/admin/integrations", authMiddleware, adminMiddleware, integrationRouter);
 
 app.listen(PORT, () => {
   console.log(`🚀 Fauke API running on http://localhost:${PORT}`);

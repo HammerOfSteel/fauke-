@@ -35,15 +35,16 @@ model TimeEntry {
 }
 
 model User {
-  id           String        @id @default(uuid())
-  username     String        @unique
+  id           String              @id @default(uuid())
+  username     String              @unique
   passwordHash String
   displayName  String
-  role         String        @default("user")
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  role         String              @default("user")
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
   entries      TimeEntry[]
   projects     UserProject[]
+  integrations UserIntegration[]
 }
 
 model UserProject {
@@ -57,4 +58,48 @@ model UserProject {
   @@unique([userId, projectId])
   @@index([userId])
   @@index([projectId])
+}
+
+// ── Integrations ──────────────────────────────────────────────
+
+model Integration {
+  id          String              @id @default(uuid())
+  provider    String              // "fortnox" | "visma" | "pe_accounting"
+  name        String              // Human label e.g. "Fortnox – Our Company"
+  config      Json                // Provider-specific config (tokens, company id, etc.) – encrypted at rest
+  enabled     Boolean             @default(true)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  users       UserIntegration[]
+  syncLogs    SyncLog[]
+
+  @@index([provider])
+}
+
+model UserIntegration {
+  id            String      @id @default(uuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  integrationId String
+  integration   Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  externalId    String?     // The user's employee/user ID in the external system
+  createdAt     DateTime    @default(now())
+
+  @@unique([userId, integrationId])
+  @@index([userId])
+  @@index([integrationId])
+}
+
+model SyncLog {
+  id            String      @id @default(uuid())
+  integrationId String
+  integration   Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  userId        String?     // Null if system-level sync
+  status        String      // "success" | "error" | "partial"
+  message       String?
+  entriesSynced Int         @default(0)
+  createdAt     DateTime    @default(now())
+
+  @@index([integrationId])
+  @@index([createdAt])
 }

@@ -47,6 +47,51 @@
 
 ---
 
+## v1.5 — Integrations (Fortnox / Visma / PE Accounting)
+
+### Database & Schema
+- [x] `Integration` model (provider, name, JSON config, enabled flag)
+- [x] `UserIntegration` model (user ↔ integration, external employee ID)
+- [x] `SyncLog` model (integration sync history + status)
+- [x] Prisma migration `add_integrations`
+
+### Backend — Integration Service Layer
+- [x] Adapter interface (`IntegrationAdapter`) with `testConnection` + `syncTimeEntries`
+- [x] Adapter registry with provider metadata & config field schemas
+- [x] Fortnox mock adapter (OAuth 2.0, POST /3/timereportings)
+- [x] Visma mock adapter (OAuth 2.0, POST /v2/shortcuts/hoursworked + invoice drafts)
+- [x] PE Accounting mock adapter (API token, POST /api/v1/company/{id}/timeregistration, XML)
+- [x] Admin API: CRUD integrations (`/api/admin/integrations`)
+- [x] Admin API: test connection (`POST /:id/test`)
+- [x] Admin API: assign/remove users (`POST/DELETE /:id/users`)
+- [x] Admin API: sync time entries (`POST /:id/sync`)
+- [x] Admin API: view sync logs (`GET /:id/logs`)
+- [x] Admin API: list providers with config schemas (`GET /providers`)
+
+### Frontend — Admin Integrations Tab
+- [x] Tabbed admin panel (Users | Integrations)
+- [x] Integration list with provider badge, user count, sync count
+- [x] Create integration modal (provider selector, config fields)
+- [x] Expand/collapse detail view with config editing
+- [x] Test connection button with inline result
+- [x] Enable/disable toggle per integration
+- [x] User assignment with external ID mapping
+- [x] Sync modal (date range picker per user)
+- [x] Sync log viewer (filterable by status)
+- [x] Sensitive field masking with show/hide toggle
+
+### Production Readiness (future)
+- [ ] Swap Fortnox mock → real adapter (requires Fortnox partner account)
+- [ ] Swap Visma mock → real adapter (requires Visma developer registration)
+- [ ] Swap PE Accounting mock → real adapter (requires customer API token)
+- [ ] OAuth callback flow for Fortnox & Visma (redirect + token exchange)
+- [ ] Encrypt integration config at rest (AES-256)
+- [ ] Scheduled auto-sync (cron-like, e.g. nightly)
+- [ ] Webhook receivers for real-time sync triggers
+- [ ] Per-integration rate limiting & retry with exponential backoff
+
+---
+
 ## v2.0 — Plugin System (future)
 - [ ] Define plugin interface (`IFaukePlugin`)
 - [ ] Plugin registry & config UI
