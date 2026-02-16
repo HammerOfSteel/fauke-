@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: fauke
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-fauke_prod_2026}
+      POSTGRES_DB: fauke
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fauke"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    # No ports exposed — internal only
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://fauke:${DB_PASSWORD:-fauke_prod_2026}@db:5432/fauke?schema=public
+      PORT: "3001"
+      JWT_SECRET: ${JWT_SECRET:-fauke-prod-secret-change-me}
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
